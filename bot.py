@@ -1,38 +1,60 @@
 from telegram.ext import Updater, CommandHandler
 import requests
+import json
+import datetime
 
-# تنظیمات اولیه
-BOT_TOKEN = "YOUR_BOT_TOKEN"  # توکنی که از BotFather گرفتی
-PANEL_URL = "YOUR_PANEL_URL"  # آدرس پنل (مثل http://your-server:port)
-PANEL_USERNAME = "YOUR_PANEL_USERNAME"  # نام کاربری پنل
-PANEL_PASSWORD = "YOUR_PANEL_PASSWORD"  # رمز عبور پنل
+# خواندن تنظیمات از config.json
+with open("config.json") as f:
+    config = json.load(f)
+
+BOT_TOKEN = config["BOT_TOKEN"]
+PANEL_URL = config["PANEL_URL"]
+PANEL_USERNAME = config["PANEL_USERNAME"]
+PANEL_PASSWORD = config["PANEL_PASSWORD"]
 
 def start(update, context):
     update.message.reply_text("سلام! برای دیدن کانفیگ‌ها از /configs استفاده کن.")
 
 def get_configs():
     try:
-        # ورود به پنل (برای سنایی/علیرضا)
         login_url = f"{PANEL_URL}/login"
         configs_url = f"{PANEL_URL}/panel/api/inbounds/list"
         login_data = {"username": PANEL_USERNAME, "password": PANEL_PASSWORD}
         session = requests.Session()
-        session.post(login_url, json=login_data)
+        login_response = session.post(login_url, json=login_data)
+
+        if login_response.status_code != 200:
+            return None
+
         response = session.get(configs_url)
-        return response.json()
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
     except:
         return None
 
 def configs(update, context):
     data = get_configs()
     if data:
-        message = "کانفیگ‌های پنل:\n"
+        message = "📡 کانفیگ‌های موجود:\n\n"
         for inbound in data.get("obj", []):
             for client in inbound.get("clients", []):
-                message += f"کاربر: {client['email']}\nلینک: {client['subId']}\nحجم: {client['totalGB']} GB\nانقضا: {client['expiryTime']}\n\n"
+                expiry = int(client.get("expiryTime", 0))
+                expiry_str = "ندارد"
+                if expiry > 0:
+                    dt = datetime.datetime.fromtimestamp(expiry)
+                    expiry_str = dt.strftime("%Y-%m-%d %H:%M")
+
+                message += (
+                    f"👤 کاربر: {client.get('email', 'بدون‌نام')}\n"
+                    f"🧩 SubID: {client.get('subId', '-')}\n"
+                    f"📦 حجم: {client.get('totalGB', '-')} GB\n"
+                    f"⏰ انقضا: {expiry_str}\n\n"
+                )
         update.message.reply_text(message)
     else:
-        update.message.reply_text("خطا در اتصال به پنل!")
+        update.message.reply_text("❌ خطا در اتصال به پنل یا دریافت اطلاعات.")
 
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
