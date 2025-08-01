@@ -1,34 +1,36 @@
 #!/bin/bash
-echo "Installing VPN Bot..."
+
+echo "🔧 در حال نصب ربات XUI پنل..."
 
 # نصب پیش‌نیازها
 sudo apt update
 sudo apt install -y python3 python3-pip git
 
-# دانلود کد ربات
+# کلون کردن پروژه
 git clone https://github.com/Rango4748/xbot.git
-cd vpn-bot
+cd xbot || exit
 
-# نصب کتابخونه‌ها
+# نصب کتابخانه‌ها
 pip3 install -r requirements.txt
 
-# گرفتن اطلاعات پنل
-echo "Enter your Telegram Bot Token: "
-read BOT_TOKEN
-echo "Enter your Panel URL (e.g., http://your-server:port): "
-read PANEL_URL
-echo "Enter your Panel Username: "
-read PANEL_USERNAME
-echo "Enter your Panel Password: "
-read PANEL_PASSWORD
+# گرفتن اطلاعات از کاربر
+read -p "Enter your Telegram Bot Token: " BOT_TOKEN
+read -p "Enter your Panel URL (e.g., http://your-server:port): " PANEL_URL
+read -p "Enter your Panel Username: " PANEL_USERNAME
+read -p "Enter your Panel Password: " PANEL_PASSWORD
 
-# جایگزینی اطلاعات در bot.py
-sed -i "s/YOUR_BOT_TOKEN/$BOT_TOKEN/" bot.py
-sed -i "s|YOUR_PANEL_URL|$PANEL_URL|" bot.py
-sed -i "s/YOUR_PANEL_USERNAME/$PANEL_USERNAME/" bot.py
-sed -i "s/YOUR_PANEL_PASSWORD/$PANEL_PASSWORD/" bot.py
+# ساخت فایل config.json
+cat <<EOF > config.json
+{
+  "BOT_TOKEN": "$BOT_TOKEN",
+  "PANEL_URL": "$PANEL_URL",
+  "PANEL_USERNAME": "$PANEL_USERNAME",
+  "PANEL_PASSWORD": "$PANEL_PASSWORD"
+}
+EOF
 
-# اجرای ربات
-python3 bot.py
+# اجرای ربات در بک‌گراند
+nohup python3 bot.py > log.txt 2>&1 &
 
-echo "Bot is running!"
+echo "✅ ربات با موفقیت نصب و اجرا شد!"
+echo "📄 لاگ‌ها: tail -f log.txt"
