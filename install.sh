@@ -6,7 +6,7 @@ sudo apt update
 sudo apt install -y python3 python3-pip git
 
 # دانلود کد ربات
-git clone https://github.com/yourusername/vpn-bot.git
+git clone https://github.com/Rango4748/xbot.git
 cd vpn-bot
 
 # نصب کتابخونه‌ها
